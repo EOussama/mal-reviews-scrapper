@@ -25,12 +25,6 @@ jobs:
         source .venv/bin/activate
         ./scripts/run.sh
 
-    - name: Checkout Archive Branch
-      uses: actions/checkout@v3
-      with:
-        ref: archive
-        path: archive
-
     - name: Update Archive Branch
       run: |
         cp -r out/* archive/
