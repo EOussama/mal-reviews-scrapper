@@ -27,7 +27,7 @@ jobs:
 
     - name: Update Archive Branch
       run: |
-        rm -rf * !out/
+        find . -mindepth 1 -not -name 'out' -exec rm -rf {} +
         cp -r out/* .
         git checkout --orphan archive
         git config user.name 'GitHub Action'
