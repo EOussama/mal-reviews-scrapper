@@ -26,11 +26,7 @@ jobs:
         ./scripts/run.sh
 
     - name: Update Archive Branch
-      run: |
-        cp -r out/**/*.json .
-        git checkout --orphan out
-        git config user.name 'GitHub Action'
-        git config user.email 'action@github.com'
-        git add *.json
-        git commit -m "Archived reviews"
-        git push origin out
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./out
