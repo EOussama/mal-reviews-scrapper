@@ -27,13 +27,10 @@ jobs:
 
     - name: Update Archive Branch
       run: |
-        pwd
-        ls -al
-        find . -ignore_readdir_race -mindepth 1 -not -name 'out' -exec rm -rf {} +
         cp -r out/* .
         git checkout --orphan archive
         git config user.name 'GitHub Action'
         git config user.email 'action@github.com'
-        git add .
+        git add *.json
         git commit -m "Archived reviews"
         git push origin archive
