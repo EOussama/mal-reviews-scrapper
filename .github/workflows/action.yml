@@ -1,0 +1,35 @@
+name: Archived MAL Reviews
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Run Scraping Script
+      run: |
+        chmod +x scripts/run.sh
+        ./scripts/run.sh
+
+    - name: Checkout Archive Branch
+      uses: actions/checkout@v3
+      with:
+        ref: archive
+        path: archive
+
+    - name: Update Archive Branch
+      run: |
+        cp -r out/* archive/
+        cd archive
+        git config user.name 'GitHub Action'
+        git config user.email 'action@github.com'
+        git add .
+        git commit -m "Archived reviews"
+        git push origin archive
