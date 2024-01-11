@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <style>
+    textarea {
+      width: 100%;
+      height: 300px;
+    }
+
+    summary {
+      display: flex;
+      flex-direction: row;
+
+      color: grey;
+    }
+
+    h4 {
+      margin: 0;
+      color: black;
+    }
+
+    summary>* {
+      margin-right: 10px;
+    }
+  </style>
+
+  <title>MAL Reviews Scrapper</title>
+</head>
+
+<body>
+  <h1>MAL Reviews Scrapper</h1>
+  <hr>
+
+  <p>Created for my personal archiving needs.</p>
+  <ol id="reviews"></ol>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const reviews_csv = await fetch('assets/reviews.csv').then(e => e.text());
+      const review_file_names = reviews_csv.split(',').map(e => e.substr(e.indexOf('assets/')));
+      const review_files = review_file_names.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json()));
+
+      const reviewsElement = document.getElementById('reviews');
+      for (const review of await Promise.all(review_files)) {
+        const reviewElement = document.createElement('li');
+        const reviewDetails = document.createElement('details');
+        const reviewSummary = document.createElement('summary');
+        const reviewTextArea = document.createElement('textarea');
+        const reviewTitle = document.createElement('h4');
+        const reviewRating = document.createElement('span');
+        const reviewDate = document.createElement('span');
+        const reviewLink = document.createElement('a');
+        const reviewId = document.createElement('span');
+
+        reviewTextArea.value = review.content;
+        reviewTextArea.setAttribute('readonly', true);
+
+        reviewLink.textContent = review.title;
+        reviewLink.setAttribute('href', review.url);
+
+        reviewId.textContent = `[${review.id}]`;
+        reviewDate.textContent = `${review.date} ${review.time}`;
+        reviewRating.textContent = `${review.rating}/10 [${review.recommendation}]`;
+
+        reviewTitle.append(reviewLink);
+        reviewSummary.append(reviewId);
+        reviewSummary.append(reviewTitle);
+        reviewSummary.append(reviewRating);
+        reviewSummary.append(reviewDate);
+
+        reviewDetails.append(reviewTextArea);
+        reviewDetails.append(reviewSummary);
+        reviewElement.append(reviewDetails);
+        reviewsElement.append(reviewElement);
+      }
+    });
+  </script>
+</body>
+
+</html>
