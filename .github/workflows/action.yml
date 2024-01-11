@@ -29,7 +29,7 @@ jobs:
       run: |
         pwd
         ls -al
-        find . -mindepth 1 -not -name 'out' -exec rm -rf {} +
+        find . -ignore_readdir_race -mindepth 1 -not -name 'out' -exec rm -rf {} +
         cp -r out/* .
         git checkout --orphan archive
         git config user.name 'GitHub Action'
