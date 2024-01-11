@@ -15,6 +15,11 @@ jobs:
 
     - name: Run Scraping Script
       run: |
+        python -m venv .venv
+        source .venv/bin/activate
+
+    - name: Run Scraping Script
+      run: |
         chmod +x scripts/run.sh
         ./scripts/run.sh
 
