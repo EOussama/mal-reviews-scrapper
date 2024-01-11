@@ -27,8 +27,8 @@ jobs:
 
     - name: Update Archive Branch
       run: |
-        cp -r out/* archive/
-        cd archive
+        rm -rf * !out/
+        cp -r out/* .
         git checkout --orphan archive
         git config user.name 'GitHub Action'
         git config user.email 'action@github.com'
