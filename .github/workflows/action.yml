@@ -22,6 +22,7 @@ jobs:
     - name: Run Scraping Script
       run: |
         chmod +x scripts/run.sh
+        source .venv/bin/activate
         ./scripts/run.sh
 
     - name: Checkout Archive Branch
