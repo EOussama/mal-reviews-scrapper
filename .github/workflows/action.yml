@@ -27,6 +27,8 @@ jobs:
 
     - name: Update Archive Branch
       run: |
+        pwd
+        ls -al
         find . -mindepth 1 -not -name 'out' -exec rm -rf {} +
         cp -r out/* .
         git checkout --orphan archive
