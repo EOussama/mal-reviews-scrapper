@@ -1,5 +1,7 @@
 # MAL Reviews Scrapper
 
+[![Archived MAL Reviews](https://github.com/EOussama/mal-reviews-scrapper/actions/workflows/action.yml/badge.svg?branch=main)](https://github.com/EOussama/mal-reviews-scrapper/actions/workflows/action.yml)
+
 Created for my personal archiving needs.
 
 ## Usage
