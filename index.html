@@ -16,10 +16,16 @@
     }
 
     summary {
+      cursor: pointer;
+
       display: flex;
       flex-direction: row;
 
       color: grey;
+    }
+
+    summary:hover {
+      background-color: whitesmoke;
     }
 
     h4 {
@@ -46,10 +52,11 @@
     window.addEventListener('DOMContentLoaded', async () => {
       const reviews_csv = await fetch('assets/reviews.csv').then(e => e.text());
       const review_file_names = reviews_csv.split(',').map(e => e.substr(e.indexOf('assets/')));
-      const review_files = review_file_names.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json()));
-
+      const review_files = await Promise.all(review_file_names.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
+      const reviews = review_files.sort((a, b) => new Date(a.date) - new Date(b.date));
       const reviewsElement = document.getElementById('reviews');
-      for (const review of await Promise.all(review_files)) {
+
+      for (const review of reviews) {
         const reviewElement = document.createElement('li');
         const reviewDetails = document.createElement('details');
         const reviewSummary = document.createElement('summary');
