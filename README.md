@@ -15,3 +15,9 @@ or
 ```sh
 ./scripts/run.sh
 ```
+
+## Todo
+
+- [ ] Cache file (accumulate cache folder contents into one json file)
+- [ ] Dump cache script
+- [ ] Compare and classify scrapped
