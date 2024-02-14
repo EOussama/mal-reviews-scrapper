@@ -35,13 +35,15 @@
       margin-right: 10px;
     }
 
-    button {
-      margin-right: 5px;
+    button:not(:last-of-type) {
+      margin-right: 8px;
+      border-radius: 5px;
+      border: 1px solid black;
     }
 
     .active {
-      border-radius: 5px;
-      outline: 1px solid black;
+      outline-offset: 2px;
+      outline: 2px solid black;
     }
 
     .old {
@@ -73,22 +75,26 @@
   <hr>
 
   <p>Created for my personal archiving needs.</p>
+  <p id="cache"></p>
   <p id="stats"></p>
+
+  <hr>
   <ol id="reviews"></ol>
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
-      const cache = await loadCache();
+      const cacheTimestamp = '2024-02-14-12-04-47';
+
+      const cache = await loadCache(cacheTimestamp);
       const fileNames = await loadFileNames();
       const reviews = await loadReviews(fileNames, cache.reviews);
 
-      updateReviewsDOM(reviews);
       updateStatsDOM(reviews);
+      updateReviewsDOM(reviews);
+      updateCacheDOM(cacheTimestamp);
 
-      async function loadCache() {
-        const cacheTimestamp = '2024-02-14-12-04-47';
+      async function loadCache(cacheTimestamp) {
         const cache = await fetch(`assets/cache/cache-${cacheTimestamp}.json`).then(e => e.json());
-
         return cache;
       }
 
@@ -100,8 +106,7 @@
       }
 
       async function loadReviews(fileNames, cachedReviews) {
-        const reviewFiles = await Promise.all(fileNames.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
-        const reviews = reviewFiles.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const reviews = await Promise.all(fileNames.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
 
         for (const cachedReview of cachedReviews) {
           for (const review of reviews) {
@@ -136,7 +141,7 @@
           }
         }
 
-        return reviews;
+        return reviews.sort((a, b) => new Date(a.date) - new Date(b.date));
       }
 
       function updateReviewsDOM(reviews) {
@@ -216,6 +221,8 @@
         statsElement.appendChild(changedButton);
         statsElement.appendChild(missingButton);
 
+        allButton.click();
+
         function filterHandler(status, e) {
           const target = e.target;
 
@@ -229,18 +236,23 @@
 
           for (const review of reviewsElement.querySelectorAll('#reviews li')) {
             if (status === 'all') {
-              review.style.display = 'block';
+              review.style.display = 'list-item';
             } else {
               const reviewStatus = review.getAttribute('status');
 
               if (status === reviewStatus) {
-                review.style.display = 'block';
+                review.style.display = 'list-item';
               } else {
                 review.style.display = 'none';
               }
             }
           }
         }
+      }
+
+      function updateCacheDOM(cacheTimestamp) {
+        const cacheElement = document.getElementById('cache');
+        cacheElement.textContent = `Last cache on ${cacheTimestamp}.`;
       }
     });
   </script>
