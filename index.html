@@ -4,10 +4,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     textarea {
@@ -36,6 +34,35 @@
     summary>* {
       margin-right: 10px;
     }
+
+    button {
+      margin-right: 5px;
+    }
+
+    .active {
+      border-radius: 5px;
+      outline: 1px solid black;
+    }
+
+    .old {
+      color: #c2c2c2;
+    }
+
+    .changed {
+      color: #ffbe0a;
+    }
+
+    .new {
+      color: #1ba031;
+    }
+
+    .restored {
+      color: #00a2ff;
+    }
+
+    .missing {
+      color: #ff392b;
+    }
   </style>
 
   <title>MAL Reviews Scrapper</title>
@@ -46,47 +73,174 @@
   <hr>
 
   <p>Created for my personal archiving needs.</p>
+  <p id="stats"></p>
   <ol id="reviews"></ol>
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
-      const reviews_csv = await fetch('assets/reviews.csv').then(e => e.text());
-      const review_file_names = reviews_csv.split(',').map(e => e.substr(e.indexOf('assets/')));
-      const review_files = await Promise.all(review_file_names.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
-      const reviews = review_files.sort((a, b) => new Date(a.date) - new Date(b.date));
-      const reviewsElement = document.getElementById('reviews');
+      const cache = await loadCache();
+      const fileNames = await loadFileNames();
+      const reviews = await loadReviews(fileNames, cache.reviews);
 
-      for (const review of reviews) {
-        const reviewElement = document.createElement('li');
-        const reviewDetails = document.createElement('details');
-        const reviewSummary = document.createElement('summary');
-        const reviewTextArea = document.createElement('textarea');
-        const reviewTitle = document.createElement('h4');
-        const reviewRating = document.createElement('span');
-        const reviewDate = document.createElement('span');
-        const reviewLink = document.createElement('a');
-        const reviewId = document.createElement('span');
+      updateReviewsDOM(reviews);
+      updateStatsDOM(reviews);
 
-        reviewTextArea.value = review.content;
-        reviewTextArea.setAttribute('readonly', true);
+      async function loadCache() {
+        const cacheTimestamp = '2024-02-14-12-04-47';
+        const cache = await fetch(`assets/cache/cache-${cacheTimestamp}.json`).then(e => e.json());
 
-        reviewLink.textContent = review.title;
-        reviewLink.setAttribute('href', review.url);
+        return cache;
+      }
 
-        reviewId.textContent = `[${review.id}]`;
-        reviewDate.textContent = `${review.date} ${review.time}`;
-        reviewRating.textContent = `${review.rating}/10 [${review.recommendation}]`;
+      async function loadFileNames() {
+        const reviewsCSV = await fetch('assets/reviews.csv').then(e => e.text());
+        const reviewFileNames = reviewsCSV.split(',').map(e => e.substr(e.indexOf('assets/')));
 
-        reviewTitle.append(reviewLink);
-        reviewSummary.append(reviewId);
-        reviewSummary.append(reviewTitle);
-        reviewSummary.append(reviewRating);
-        reviewSummary.append(reviewDate);
+        return reviewFileNames;
+      }
 
-        reviewDetails.append(reviewTextArea);
-        reviewDetails.append(reviewSummary);
-        reviewElement.append(reviewDetails);
-        reviewsElement.append(reviewElement);
+      async function loadReviews(fileNames, cachedReviews) {
+        const reviewFiles = await Promise.all(fileNames.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
+        const reviews = reviewFiles.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        for (const cachedReview of cachedReviews) {
+          for (const review of reviews) {
+            if (review.id === cachedReview.id) {
+              if (review.date !== cachedReview.date) {
+                review.status = 'restored';
+              }
+
+              else if (review.content !== cachedReview.content) {
+                review.status = 'changed';
+              }
+            }
+          }
+        }
+
+        for (const deletedReview of cachedReviews.filter(e => !reviews.map(e => e.id).includes(e.id))) {
+          reviews.push({
+            ...deletedReview,
+            status: 'missing'
+          });
+        }
+
+        for (const review of reviews) {
+          if (!review.status) {
+            if (cachedReviews.map(e => e.id).includes(review.id)) {
+              review.status = 'old';
+            }
+
+            else {
+              review.status = 'new';
+            }
+          }
+        }
+
+        return reviews;
+      }
+
+      function updateReviewsDOM(reviews) {
+        const reviewsElement = document.getElementById('reviews');
+
+        for (const review of reviews) {
+          const reviewElement = document.createElement('li');
+          const reviewDetails = document.createElement('details');
+          const reviewSummary = document.createElement('summary');
+          const reviewTextArea = document.createElement('textarea');
+          const reviewTitle = document.createElement('h4');
+          const reviewRating = document.createElement('span');
+          const reviewDate = document.createElement('span');
+          const reviewLink = document.createElement('a');
+          const reviewId = document.createElement('span');
+          const reviewStatus = document.createElement('span');
+          const reviewType = document.createElement('span');
+
+          reviewTextArea.value = review.content;
+          reviewTextArea.setAttribute('readonly', true);
+
+          reviewLink.textContent = review.title;
+          reviewLink.setAttribute('href', review.url);
+
+          reviewId.textContent = `[${review.id}]`;
+          reviewType.textContent = `[${review.type}]`;
+          reviewDate.textContent = `${review.date} ${review.time}`;
+          reviewRating.textContent = `${review.rating}/10 [${review.recommendation}]`;
+
+          reviewStatus.textContent = `[${review.status}]`;
+          reviewStatus.classList.add(review.status);
+
+          reviewElement.setAttribute('id', review.id);
+          reviewElement.setAttribute('type', review.type);
+          reviewElement.setAttribute('status', review.status);
+
+          reviewTitle.append(reviewLink);
+          reviewSummary.append(reviewStatus);
+          reviewSummary.append(reviewId);
+          reviewSummary.append(reviewType);
+          reviewSummary.append(reviewTitle);
+          reviewSummary.append(reviewRating);
+          reviewSummary.append(reviewDate);
+
+          reviewDetails.append(reviewTextArea);
+          reviewDetails.append(reviewSummary);
+          reviewElement.append(reviewDetails);
+          reviewsElement.append(reviewElement);
+        }
+      }
+
+      function updateStatsDOM(reviews) {
+        const statsElement = document.getElementById('stats');
+        const reviewsElement = document.getElementById('reviews');
+
+        const allButton = document.createElement('button');
+        const oldButton = document.createElement('button');
+        const newButton = document.createElement('button');
+        const changedButton = document.createElement('button');
+        const missingButton = document.createElement('button');
+
+        allButton.textContent = `All Reviews ${reviews.length}`;
+        oldButton.textContent = `Old Reviews ${reviews.filter(e => e.status === 'old').length}`;
+        newButton.textContent = `New Reviews ${reviews.filter(e => e.status === 'new').length}`;
+        changedButton.textContent = `Changed Reviews ${reviews.filter(e => e.status === 'changed').length}`;
+        missingButton.textContent = `Missing Reviews ${reviews.filter(e => e.status === 'missing').length}`;
+
+        allButton.addEventListener('click', filterHandler.bind(this, 'all'));
+        oldButton.addEventListener('click', filterHandler.bind(this, 'old'));
+        newButton.addEventListener('click', filterHandler.bind(this, 'new'));
+        changedButton.addEventListener('click', filterHandler.bind(this, 'changed'));
+        missingButton.addEventListener('click', filterHandler.bind(this, 'missing'));
+
+        statsElement.appendChild(allButton);
+        statsElement.appendChild(oldButton);
+        statsElement.appendChild(newButton);
+        statsElement.appendChild(changedButton);
+        statsElement.appendChild(missingButton);
+
+        function filterHandler(status, e) {
+          const target = e.target;
+
+          for (const button of statsElement.childNodes) {
+            if (button === target) {
+              button.classList.add('active');
+            } else {
+              button.classList.remove('active');
+            }
+          }
+
+          for (const review of reviewsElement.querySelectorAll('#reviews li')) {
+            if (status === 'all') {
+              review.style.display = 'block';
+            } else {
+              const reviewStatus = review.getAttribute('status');
+
+              if (status === reviewStatus) {
+                review.style.display = 'block';
+              } else {
+                review.style.display = 'none';
+              }
+            }
+          }
+        }
       }
     });
   </script>
