@@ -15,8 +15,3 @@ or
 ```sh
 ./scripts/run.sh
 ```
-
-## Todo
-
-- [ ] Dump cache script
-- [ ] Compare and classify scrapped
