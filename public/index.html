@@ -34,6 +34,18 @@
     summary>* {
       margin-right: 10px;
     }
+
+    .old {
+      color: #c2c2c2;
+    }
+
+    .changed {
+      color: #ffbe0a;
+    }
+
+    .new {
+      color: #1ba031;
+    }
   </style>
 
   <title>MAL Reviews Scrapper</title>
@@ -50,41 +62,10 @@
     window.addEventListener('DOMContentLoaded', async () => {
       const cache = await loadCache();
       const fileNames = await loadFileNames();
-      const reviews = await loadReviews(fileNames);
+      const reviews = await loadReviews(fileNames, cache.reviews);
       const reviewsElement = document.getElementById('reviews');
 
-      for (const review of reviews) {
-        const reviewElement = document.createElement('li');
-        const reviewDetails = document.createElement('details');
-        const reviewSummary = document.createElement('summary');
-        const reviewTextArea = document.createElement('textarea');
-        const reviewTitle = document.createElement('h4');
-        const reviewRating = document.createElement('span');
-        const reviewDate = document.createElement('span');
-        const reviewLink = document.createElement('a');
-        const reviewId = document.createElement('span');
-
-        reviewTextArea.value = review.content;
-        reviewTextArea.setAttribute('readonly', true);
-
-        reviewLink.textContent = review.title;
-        reviewLink.setAttribute('href', review.url);
-
-        reviewId.textContent = `[${review.id}]`;
-        reviewDate.textContent = `${review.date} ${review.time}`;
-        reviewRating.textContent = `${review.rating}/10 [${review.recommendation}]`;
-
-        reviewTitle.append(reviewLink);
-        reviewSummary.append(reviewId);
-        reviewSummary.append(reviewTitle);
-        reviewSummary.append(reviewRating);
-        reviewSummary.append(reviewDate);
-
-        reviewDetails.append(reviewTextArea);
-        reviewDetails.append(reviewSummary);
-        reviewElement.append(reviewDetails);
-        reviewsElement.append(reviewElement);
-      }
+      updateDOM(reviews);
 
       async function loadCache() {
         const cacheTimestamp = '2024-02-14-12-04-47';
@@ -99,11 +80,68 @@
         return reviewFileNames;
       }
 
-      async function loadReviews(fileNames) {
+      async function loadReviews(fileNames, cachedReviews) {
         const reviewFiles = await Promise.all(fileNames.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
         const reviews = reviewFiles.sort((a, b) => new Date(a.date) - new Date(b.date));
 
+        for (const cachedReview of cachedReviews) {
+          for (const review of reviews) {
+            if (!review.status) {
+              review.status = 'old';
+            }
+
+            if (review.id === cachedReview.id) {
+              if (review.content !== cachedReview.content) {
+                review.status = 'changed';
+              }
+            }
+          }
+        }
+
         return reviews;
+      }
+
+      function updateDOM(reviews) {
+        for (const review of reviews) {
+          const reviewElement = document.createElement('li');
+          const reviewDetails = document.createElement('details');
+          const reviewSummary = document.createElement('summary');
+          const reviewTextArea = document.createElement('textarea');
+          const reviewTitle = document.createElement('h4');
+          const reviewRating = document.createElement('span');
+          const reviewDate = document.createElement('span');
+          const reviewLink = document.createElement('a');
+          const reviewId = document.createElement('span');
+          const reviewStatus = document.createElement('span');
+          const reviewType = document.createElement('span');
+
+          reviewTextArea.value = review.content;
+          reviewTextArea.setAttribute('readonly', true);
+
+          reviewLink.textContent = review.title;
+          reviewLink.setAttribute('href', review.url);
+
+          reviewId.textContent = `[${review.id}]`;
+          reviewType.textContent = `[${review.type}]`;
+          reviewDate.textContent = `${review.date} ${review.time}`;
+          reviewRating.textContent = `${review.rating}/10 [${review.recommendation}]`;
+
+          reviewStatus.textContent = `[${review.status}]`;
+          reviewStatus.classList.add(review.status);
+
+          reviewTitle.append(reviewLink);
+          reviewSummary.append(reviewStatus);
+          reviewSummary.append(reviewId);
+          reviewSummary.append(reviewType);
+          reviewSummary.append(reviewTitle);
+          reviewSummary.append(reviewRating);
+          reviewSummary.append(reviewDate);
+
+          reviewDetails.append(reviewTextArea);
+          reviewDetails.append(reviewSummary);
+          reviewElement.append(reviewDetails);
+          reviewsElement.append(reviewElement);
+        }
       }
     });
   </script>
