@@ -4,10 +4,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     textarea {
@@ -50,10 +48,9 @@
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
-      const reviews_csv = await fetch('assets/reviews.csv').then(e => e.text());
-      const review_file_names = reviews_csv.split(',').map(e => e.substr(e.indexOf('assets/')));
-      const review_files = await Promise.all(review_file_names.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
-      const reviews = review_files.sort((a, b) => new Date(a.date) - new Date(b.date));
+      const cache = await loadCache();
+      const fileNames = await loadFileNames();
+      const reviews = await loadReviews(fileNames);
       const reviewsElement = document.getElementById('reviews');
 
       for (const review of reviews) {
@@ -87,6 +84,26 @@
         reviewDetails.append(reviewSummary);
         reviewElement.append(reviewDetails);
         reviewsElement.append(reviewElement);
+      }
+
+      async function loadCache() {
+        const cacheTimestamp = '2024-02-14-12-04-47';
+        const cache = await fetch(`assets/cache/cache-${cacheTimestamp}.json`).then(e => e.json());
+        return cache;
+      }
+
+      async function loadFileNames() {
+        const reviewsCSV = await fetch('assets/reviews.csv').then(e => e.text());
+        const reviewFileNames = reviewsCSV.split(',').map(e => e.substr(e.indexOf('assets/')));
+
+        return reviewFileNames;
+      }
+
+      async function loadReviews(fileNames) {
+        const reviewFiles = await Promise.all(fileNames.filter(e => e.endsWith('.json')).map(e => fetch(e).then(e => e.json())));
+        const reviews = reviewFiles.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        return reviews;
       }
     });
   </script>
