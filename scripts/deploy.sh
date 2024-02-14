@@ -1,9 +1,10 @@
 #! /bin/bash
 
-mkdir -p build/assets
+mkdir -p build/assets/cache
 
 cp public/* build
 cp out/**/*.json build/assets
+cp cache/*.json build/assets/cache
 
 file_array=()
 
