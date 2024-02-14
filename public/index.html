@@ -75,22 +75,26 @@
   <hr>
 
   <p>Created for my personal archiving needs.</p>
+  <p id="cache"></p>
   <p id="stats"></p>
+
+  <hr>
   <ol id="reviews"></ol>
 
   <script>
     window.addEventListener('DOMContentLoaded', async () => {
-      const cache = await loadCache();
+      const cacheTimestamp = '2024-02-14-12-04-47';
+
+      const cache = await loadCache(cacheTimestamp);
       const fileNames = await loadFileNames();
       const reviews = await loadReviews(fileNames, cache.reviews);
 
-      updateReviewsDOM(reviews);
       updateStatsDOM(reviews);
+      updateReviewsDOM(reviews);
+      updateCacheDOM(cacheTimestamp);
 
-      async function loadCache() {
-        const cacheTimestamp = '2024-02-14-12-04-47';
+      async function loadCache(cacheTimestamp) {
         const cache = await fetch(`assets/cache/cache-${cacheTimestamp}.json`).then(e => e.json());
-
         return cache;
       }
 
@@ -244,6 +248,11 @@
             }
           }
         }
+      }
+
+      function updateCacheDOM(cacheTimestamp) {
+        const cacheElement = document.getElementById('cache');
+        cacheElement.textContent = `Last cache on ${cacheTimestamp}.`;
       }
     });
   </script>
