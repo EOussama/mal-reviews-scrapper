@@ -28,7 +28,7 @@ jobs:
 
     - name: Building Preview Page
       run: |
-        chmod +x scripts/run.sh
+        chmod +x scripts/deploy.sh
         ./scripts/deploy.sh
 
     - name: Update Archive Branch
